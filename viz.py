@@ -12,6 +12,15 @@ def fix_figure_colors(fig):
     )
     return fig
 
+def safe_export_png(fig, filename):
+    try:
+        img_bytes = fig.to_image(format="png")
+        with open(filename, "wb") as f:
+            f.write(img_bytes)
+    except Exception:
+        st.plotly_chart(fig, use_container_width=True)
+        st.warning("PNG export gagal, tampilkan chart langsung")
+        
 # === Visualisasi METAR ===
 # === Visualisasi METAR ===
 # === Visualisasi METAR ===
@@ -256,3 +265,4 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+

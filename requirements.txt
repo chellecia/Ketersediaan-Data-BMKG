@@ -1,0 +1,9 @@
+streamlit
+nest_asyncio
+aiohttp
+pandas
+numpy
+plotly
+streamlit-option-menu
+openpyxl
+requests

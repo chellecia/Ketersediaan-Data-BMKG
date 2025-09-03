@@ -6,4 +6,6 @@ numpy
 plotly
 streamlit-option-menu
 openpyxl
+kaleido
+
 requests

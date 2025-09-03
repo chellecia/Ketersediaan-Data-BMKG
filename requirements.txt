@@ -1,6 +1,6 @@
 streamlit
 plotly>=5.15.0
-kaleido>=1.0.0
+kaleido==0.2.1
 nest_asyncio
 aiohttp
 pandas
@@ -8,3 +8,4 @@ numpy
 streamlit-option-menu
 openpyxl
 requests
+

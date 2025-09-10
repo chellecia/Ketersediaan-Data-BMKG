@@ -86,7 +86,7 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
     fig2.update_layout(
     title=dict(
         text="Distribusi Status Ketersediaan",
-        y=1.05,
+        y=1.0,
         x=0.0,
         xanchor="left"
     )
@@ -277,6 +277,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

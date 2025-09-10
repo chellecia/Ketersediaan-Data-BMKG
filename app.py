@@ -65,7 +65,7 @@ st.markdown("""
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 ">
-📡 Analisis Ketersediaan Data Pengamatan BMKG
+📡 Analisis Ketersediaan Data Pengamatan Meteorologi
 </h1>
 <p style="text-align: center; font-size: 20px;">METAR • RASON • SPECI</p>
 """, unsafe_allow_html=True)
@@ -669,6 +669,7 @@ if menu == "SPECI":
             )
     else:
         st.warning("Lakukan analisis SPECI terlebih dahulu.")
+
 
 
 

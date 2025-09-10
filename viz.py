@@ -90,9 +90,11 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         x=0.0,
         xanchor="left"
     ),
-    margin=dict(l=200, r=80, t=200, b=80)  # grafik lebih turun & ke kanan
 )
-
+    # Geser grafik pie ke kanan dan ke bawah
+    fig2.update_traces(
+        domain=dict(x=[0.3, 1.0], y=[0.0, 0.7])  
+    )
     
     fig2.update_traces(textinfo='percent+label')
     st.plotly_chart(fig2, use_container_width=True)

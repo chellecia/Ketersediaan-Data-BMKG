@@ -89,7 +89,7 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         y=1.05,
         x=0.0,
         xanchor="left"
-    ),
+    )
 )
     # Geser grafik pie ke kanan dan ke bawah
     fig2.update_traces(
@@ -277,6 +277,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

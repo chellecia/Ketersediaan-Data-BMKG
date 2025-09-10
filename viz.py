@@ -90,12 +90,12 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
     title=dict(
         text="Distribusi Status Ketersediaan",
         y=0.95,   # geser ke atas
-        x=0.5,    # posisi horizontal (tengah)
-        
+        x=0.01,    # posisi horizontal (tengah)
+        xanchor ="left",
         yanchor="top"
     ),
-    margin=dict(t=100)  # tambahin margin atas
-    )
+    margin=dict(t=100, l = 50)
+)
 
     fig2.update_traces(textinfo='percent+label')
     st.plotly_chart(fig2, use_container_width=True)

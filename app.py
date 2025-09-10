@@ -41,7 +41,7 @@ async def fetch_and_analyze_speci_wrapper(tahun, bulan, station_info_map):
         )
         
 # --- Page Config ---        
-st.set_page_config(page_title="Analisis Ketersediaan Data Cuaca BMKG", layout="wide")
+st.set_page_config(page_title="Analisis Ketersediaan Data Pengamatan BMKG", layout="wide")
 # st.markdown("""
 # <div style="
 #     background: linear-gradient(to right, #1f77b4, #2ca02c);
@@ -669,5 +669,6 @@ if menu == "SPECI":
             )
     else:
         st.warning("Lakukan analisis SPECI terlebih dahulu.")
+
 
 

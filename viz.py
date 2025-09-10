@@ -92,7 +92,6 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         y=1.02,   # geser ke atas
         x=0.0,    # posisi horizontal (tengah)
         xanchor ="left",
-        yanchor="bottom",
         pad=dict(l=10, r=0, t=20, b=0)
     ),
     margin=dict(t=150, l=100, r=80, b=80)
@@ -280,6 +279,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

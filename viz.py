@@ -90,7 +90,7 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         x=0.0,
         xanchor="left"
     ),
-    margin=dict(t=200, l=200, r=80, b=80)  # grafik lebih turun & ke kanan
+    margin=dict(l=200, r=80, t=200, b=80)  # grafik lebih turun & ke kanan
 )
 
     
@@ -275,6 +275,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

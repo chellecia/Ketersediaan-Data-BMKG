@@ -83,6 +83,17 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         title="Distribusi Status Ketersediaan",
         color_discrete_sequence=px.colors.qualitative.Safe
     )
+    fig2.update_layout(
+    title=dict(
+        text="Distribusi Status Ketersediaan",
+        y=1.05,      # geser lebih atas
+        x=0.02,      # geser sedikit ke kanan
+        xanchor="left",
+        pad=dict(l=10, r=0, t=20, b=0)
+    ),
+    margin=dict(t=150, l=150, r=80, b=80)  # tambahkan margin kiri
+)
+
 
     fig2.update_traces(textinfo='percent+label')
     st.plotly_chart(fig2, use_container_width=True)
@@ -265,6 +276,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

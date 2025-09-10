@@ -90,11 +90,12 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
     title=dict(
         text="Distribusi Status Ketersediaan",
         y=0.95,   # geser ke atas
-        x=0.01,    # posisi horizontal (tengah)
+        x=0.0,    # posisi horizontal (tengah)
         xanchor ="left",
-        yanchor="top"
+        yanchor="top",
+        pad=dict(l=10, r=0, t=20, b=0)
     ),
-    margin=dict(t=100, l = 50)
+    margin=dict(t=100)
 )
 
     fig2.update_traces(textinfo='percent+label')
@@ -279,6 +280,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

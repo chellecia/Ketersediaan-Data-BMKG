@@ -82,9 +82,7 @@ def show_metar_visualizations(df_metar: pd.DataFrame, return_figs=True):
         values="Jumlah",
         title="Distribusi Status Ketersediaan",
         color_discrete_sequence=px.colors.qualitative.Safe
-    )
-    margin=dict(t=200, l=150, r=80, b=80)
-    
+    )    
     fig2.update_traces(textinfo='percent+label')
     st.plotly_chart(fig2, use_container_width=True)
     figs.append(("pie_status.png", fig2))
@@ -266,6 +264,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
 
 
 

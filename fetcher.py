@@ -7,8 +7,8 @@ import time
 
 BASE_URL = "https://bmkgsatu.bmkg.go.id/db/bmkgsatu//@search"
 
-# Semaphore global, batasi maksimal 4 request bersamaan
-SEMAPHORE = asyncio.Semaphore(4)
+# Semaphore global, batasi maksimal 6 request bersamaan
+SEMAPHORE = asyncio.Semaphore(6)
 
 async def fetch_range_with_paging(session, headers, type_message, start, end):
     """Ambil semua data untuk 1 range (mingguan) dengan paging sampai habis."""
@@ -91,3 +91,4 @@ async def fetch_gts_data(token, session, tahun, bulan, type_message):
           f"dalam {total_elapsed:.2f} detik, total {len(all_items)} record asli")
 
     return all_items
+

@@ -12,20 +12,46 @@ from wrapper import (
     fetch_and_analyze_speci, 
     fetch_and_analyze_rason, 
     fetch_and_analyze_TAF)
-
 from viz import show_metar_visualizations, show_speci_visualizations, show_rason_visualizations, show_TAF_visualizations
+from streamlit_option_menu import option_menu
 
+
+
+# ================== LOGIN ==================
+
+# Dummy user database (ganti sesuai kebutuhan)
+USERS = {
+    "intern2025": "analyZ2025",
+}
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = ""
+
+# --- Login Page ---
+if not st.session_state.logged_in:
+    st.set_page_config(page_title="Login - Analisis BMKG", layout="centered")
+
+    st.title("🔑 Login Aplikasi Analisis Cuaca BMKG")
+    input_username = st.text_input("Username")
+    input_password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if input_username in USERS and USERS[input_username] == input_password:
+            st.session_state.logged_in = True
+            st.session_state.username = input_username
+            st.success("Login berhasil! Memuat aplikasi...")
+            st.rerun()
+        else:
+            st.error("❌ Username atau password salah.")
+
+    st.stop()  # hentikan eksekusi kalau belum login
+
+        
 # --- Page Config ---        
 st.set_page_config(page_title="Analisis Ketersediaan Data Cuaca BMKG", layout="wide")
-
-# ======= Apply nest_asyncio untuk Streamlit =======
-nest_asyncio.apply()
-
-def run_async(func, *args, **kwargs):
-    """Menjalankan fungsi async secara sinkron di Streamlit"""
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(func(*args, **kwargs))
-
+        
 # ======= Inisialisasi station_info_map =======
 async def init_station_info():
     async with aiohttp.ClientSession() as session:
@@ -153,7 +179,8 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
-
+    
+    
     menu = option_menu(
         menu_title=None,
         options=["METAR", "RASON", "SPECI", "TAF"],
@@ -186,7 +213,13 @@ with st.sidebar:
         }
     )
 
-
+# Tombol logout
+with st.sidebar:
+    if st.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.rerun()
+        
 # --- PENJELASAN MENU ---
 penjelasan = {
     "METAR": {
@@ -215,12 +248,32 @@ penjelasan = {
     }
 }
 
+def kpi_card(col, title, value, color="#1565C0", bg_color="#f9f9f9", text_color="#333"):
+    col.markdown(f"""
+    <div style="
+        background-color:{bg_color};
+        padding:6px 6px;
+        border-radius:6px;
+        text-align:center;
+        box-shadow:1px 1px 3px rgba(0,0,0,0.08);
+        width:100%;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+    ">
+        <h4 style="margin:0; font-size:1.2rem; line-height:0.8; color:{text_color};">{title}</h4>
+        <h2 style="margin:0; font-size:1.5rem; line-height:0.8; color:{color};">{value}</h2>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Fungsi helper biar ga nulis berulang
 st.write("") 
 def show_penjelasan(menu):
     st.subheader(penjelasan[menu]["judul"])
     with st.expander("📘 Penjelasan Singkat"):
         st.write(penjelasan[menu]["lengkap"])
+
 
 # ================= TAB METAR =================
 if menu == "METAR":
@@ -261,25 +314,6 @@ if menu == "METAR":
 
             st.markdown("<h4 style='margin-top:15px; color:#000000;'>📊 Ringkasan METAR</h4>", unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
-
-            def kpi_card(col, title, value, color="#1565C0", bg_color="#f9f9f9", text_color="#333"):
-                col.markdown(f"""
-                <div style="
-                    background-color:{bg_color};
-                    padding:6px 6px;
-                    border-radius:6px;
-                    text-align:center;
-                    box-shadow:1px 1px 3px rgba(0,0,0,0.08);
-                    width:100%;
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:center;
-                    align-items:center;
-                ">
-                    <h4 style="margin:0; font-size:1.2rem; line-height:0.8; color:{text_color};">{title}</h4>
-                    <h2 style="margin:0; font-size:1.5rem; line-height:0.8; color:{color};">{value}</h2>
-                </div>
-                """, unsafe_allow_html=True)
 
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
             kpi_card(col2, "📑 Total Record Harian", total_laporan)
@@ -424,27 +458,6 @@ if menu == "RASON":
             st.markdown('<h4 style="color:#000000;">📊 Ringkasan RASON</h4>', unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
             
-            # Fungsi untuk membuat card compact
-            def kpi_card(col, title, value, color="#1565C0", bg_color="#f9f9f9", text_color="#333"):
-                    col.markdown(f"""
-                    <div style="
-                        background-color:{bg_color};
-                        padding:6px 6px;
-                        border-radius:6px;
-                        text-align:center;
-                        box-shadow:1px 1px 3px rgba(0,0,0,0.08);
-                        width:100%;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:center;
-                        align-items:center;
-                        transition: all 0.2s ease-in-out;
-                    " onmouseover="this.style.transform='scale(1.02)';" 
-                    onmouseout="this.style.transform='scale(1)';">
-                        <h4 style="margin:0; font-size:1.2rem; line-height:0.8; color:{text_color};">{title}</h4>
-                        <h2 style="margin:0; font-size:1.5rem; line-height:0.8; color:{color};">{value}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
                 
             # Tampilkan KPI
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
@@ -566,28 +579,6 @@ if menu == "SPECI":
                 with st.container():    
                     st.markdown('<h4 style="color:#000000;">📊 Ringkasan SPECI</h4>', unsafe_allow_html=True)
                     col1, col2, col3 = st.columns(3)
-                    
-                    def kpi_card(col, title, value, color="#1565C0", bg_color="#f9f9f9", text_color="#333"):
-                        col.markdown(f"""
-                        <div style="
-                            background-color:{bg_color};
-                            padding:6px 6px;
-                            border-radius:6px;
-                            text-align:center;
-                            box-shadow:1px 1px 3px rgba(0,0,0,0.08);
-                            width:100%;
-                            display:flex;
-                            flex-direction:column;
-                            justify-content:center;
-                            align-items:center;
-                            transition: all 0.2s ease-in-out;
-                        " onmouseover="this.style.transform='scale(1.02)';" 
-                        onmouseout="this.style.transform='scale(1)';">
-                            <h4 style="margin:0; font-size:1.2rem; line-height:0.8; color:{text_color};">{title}</h4>
-                            <h2 style="margin:0; font-size:1.5rem; line-height:0.8; color:{color};">{value}</h2>
-                        </div>
-                        """, unsafe_allow_html=True)
-
 
                     # Tampilkan KPI SPECI
                     kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")  # biru tegas
@@ -716,27 +707,6 @@ if menu == "TAF":
             with st.container():    
                 st.markdown('<h4 style="color:#000000;">📊 Ringkasan TAF</h4>', unsafe_allow_html=True)
                 col1, col2, col3, col4 = st.columns(4)
-                    
-                def kpi_card(col, title, value, color="#1565C0", bg_color="#f9f9f9", text_color="#333"):
-                    col.markdown(f"""
-                    <div style="
-                        background-color:{bg_color};
-                        padding:6px 6px;
-                        border-radius:6px;
-                        text-align:center;
-                        box-shadow:1px 1px 3px rgba(0,0,0,0.08);
-                        width:100%;
-                        display:flex;
-                        flex-direction:column;
-                        justify-content:center;
-                        align-items:center;
-                        transition: all 0.2s ease-in-out;
-                    " onmouseover="this.style.transform='scale(1.02)';" 
-                    onmouseout="this.style.transform='scale(1)';">
-                        <h4 style="margin:0; font-size:1.2rem; line-height:0.8; color:{text_color};">{title}</h4>
-                        <h2 style="margin:0; font-size:1.5rem; line-height:0.8; color:{color};">{value}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
 
                 kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")
                 kpi_card(col2, "📑 Total Record Harian", total_record, "#1565C0")

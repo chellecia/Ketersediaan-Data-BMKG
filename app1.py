@@ -648,8 +648,8 @@ if menu == "SPECI":
                         paper_bgcolor="white",
                         plot_bgcolor="white"
                     )
-                     html_bytes = fig.to_html(full_html=False).encode("utf-8")
-                     zf.writestr(f"{filename}.html", html_bytes)
+                    html_bytes = fig.to_html(full_html=False).encode("utf-8")
+                    zf.writestr(f"{filename}.html", html_bytes)
 
             zip_buffer.seek(0)
             st.download_button(
@@ -796,6 +796,7 @@ if menu == "TAF":
             )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
+
 
 
 

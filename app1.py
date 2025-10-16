@@ -243,7 +243,7 @@ penjelasan = {
     "TAF": {
         "judul": "Analisis Data TAF",
         "lengkap": (
-            "TAF (Terminal Aerodrome Forecast) adalah rnama sandi untuk prakiraan cuaca di bandar udara"
+            "TAF (Terminal Aerodrome Forecast) adalah nama sandi untuk prakiraan cuaca di bandar udara"
         )
     }
 }
@@ -791,3 +791,4 @@ if menu == "TAF":
             )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
+

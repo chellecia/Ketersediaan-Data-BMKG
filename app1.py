@@ -401,9 +401,15 @@ if menu == "METAR":
             with zipfile.ZipFile(zip_buffer, "w") as zf:
                 for filename, fig in figs:
                     fig.update_layout(template="plotly_white", paper_bgcolor="white", plot_bgcolor="white")
+                try:
                     img_bytes = fig.to_image(format="png")
                     zf.writestr(f"{filename}.png", img_bytes)
+                except Exception as e:
+                    # fallback: simpan sebagai HTML
+                    html_bytes = fig.to_html().encode("utf-8")
+                    zf.writestr(f"{filename}.html", html_bytes)
 
+            zip_buffer.seek(0)
             st.download_button(
                 label="📥 Download Semua Grafik (ZIP)",
                 data=zip_buffer.getvalue(),
@@ -522,15 +528,21 @@ if menu == "RASON":
                         paper_bgcolor="white",
                         plot_bgcolor="white"
                     )
+                try:
                     img_bytes = fig.to_image(format="png")
                     zf.writestr(f"{filename}.png", img_bytes)
+                except Exception as e:
+                    # fallback: simpan sebagai HTML
+                    html_bytes = fig.to_html().encode("utf-8")
+                    zf.writestr(f"{filename}.html", html_bytes)
 
-                zip_buffer.seek(0)
-                st.download_button(
-                    label="📥 Download Semua Grafik (ZIP)",
-                    data=zip_buffer.getvalue(),
-                    file_name=f"rason_grafik_{tahun}_{bulan}.zip",
-                    mime="application/zip"
+          
+            zip_buffer.seek(0)
+            st.download_button(
+                label="📥 Download Semua Grafik (ZIP)",
+                data=zip_buffer.getvalue(),
+                file_name=f"rason_grafik_{tahun}_{bulan}.zip",
+                mime="application/zip"
                 )
     else:
         st.warning("Lakukan analisis RASON terlebih dahulu.")       
@@ -643,8 +655,13 @@ if menu == "SPECI":
                         paper_bgcolor="white",
                         plot_bgcolor="white"
                     )
+                try:
                     img_bytes = fig.to_image(format="png")
                     zf.writestr(f"{filename}.png", img_bytes)
+                except Exception as e:
+                    # fallback: simpan sebagai HTML
+                    html_bytes = fig.to_html().encode("utf-8")
+                    zf.writestr(f"{filename}.html", html_bytes)
 
             zip_buffer.seek(0)
             st.download_button(
@@ -791,4 +808,5 @@ if menu == "TAF":
             )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
+
 

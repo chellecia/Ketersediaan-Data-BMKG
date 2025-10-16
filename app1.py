@@ -396,24 +396,24 @@ if menu == "METAR":
             df_bulanan_filtered = st.session_state["df_metar_raw"][1]  # ambil df_bulanan dari session_state
             figs = show_metar_visualizations(df_harian_filtered, df_bulanan_filtered, return_figs=True)
 
-            # Buat ZIP grafik
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zf:
-                for filename, fig in figs:
-                    fig.update_layout(template="plotly_white", 
-                                      paper_bgcolor="white", 
-                                      plot_bgcolor="white")
+            # # Buat ZIP grafik
+            # zip_buffer = BytesIO()
+            # with zipfile.ZipFile(zip_buffer, "w") as zf:
+            #     for filename, fig in figs:
+            #         fig.update_layout(template="plotly_white", 
+            #                           paper_bgcolor="white", 
+            #                           plot_bgcolor="white")
 
-                    html_bytes = fig.to_html(full_html=False).encode("utf-8")
-                    zf.writestr(f"{filename}.html", html_bytes)
+            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
+            #         zf.writestr(f"{filename}.html", html_bytes)
 
-            zip_buffer.seek(0)
-            st.download_button(
-                label="📥 Download Semua Grafik (ZIP)",
-                data=zip_buffer.getvalue(),
-                file_name=f"metar_grafik_{tahun}_{bulan}.zip",
-                mime="application/zip"
-            )
+            # zip_buffer.seek(0)
+            # st.download_button(
+            #     label="📥 Download Semua Grafik (ZIP)",
+            #     data=zip_buffer.getvalue(),
+            #     file_name=f"metar_grafik_{tahun}_{bulan}.zip",
+            #     mime="application/zip"
+            # )
     else:
         st.warning("Lakukan analisis METAR terlebih dahulu.")
 
@@ -517,26 +517,26 @@ if menu == "RASON":
 
             figs = show_rason_visualizations(df_rason_harian_vis, df_rason_bulanan_vis, return_figs=True)
             
-            # === BUAT ZIP GRAFIK ===
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zf:
-                for filename, fig in figs:
-                    fig.update_layout(
-                        template="plotly_white",
-                        paper_bgcolor="white",
-                        plot_bgcolor="white"
-                    )
-                    html_bytes = fig.to_html(full_html=False).encode("utf-8")
-                    zf.writestr(f"{filename}.html", html_bytes)
+            # # === BUAT ZIP GRAFIK ===
+            # zip_buffer = BytesIO()
+            # with zipfile.ZipFile(zip_buffer, "w") as zf:
+            #     for filename, fig in figs:
+            #         fig.update_layout(
+            #             template="plotly_white",
+            #             paper_bgcolor="white",
+            #             plot_bgcolor="white"
+            #         )
+            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
+            #         zf.writestr(f"{filename}.html", html_bytes)
 
           
-            zip_buffer.seek(0)
-            st.download_button(
-                label="📥 Download Semua Grafik (ZIP)",
-                data=zip_buffer.getvalue(),
-                file_name=f"rason_grafik_{tahun}_{bulan}.zip",
-                mime="application/zip"
-                )
+            # zip_buffer.seek(0)
+            # st.download_button(
+            #     label="📥 Download Semua Grafik (ZIP)",
+            #     data=zip_buffer.getvalue(),
+            #     file_name=f"rason_grafik_{tahun}_{bulan}.zip",
+            #     mime="application/zip"
+            #     )
     else:
         st.warning("Lakukan analisis RASON terlebih dahulu.")       
 
@@ -639,25 +639,25 @@ if menu == "SPECI":
 
             figs = show_speci_visualizations(df_speci_harian, df_speci_bulanan, return_figs=True)
 
-            # === BUAT ZIP GRAFIK ===
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zf:
-                for filename, fig in figs:
-                    fig.update_layout(
-                        template="plotly_white",
-                        paper_bgcolor="white",
-                        plot_bgcolor="white"
-                    )
-                    html_bytes = fig.to_html(full_html=False).encode("utf-8")
-                    zf.writestr(f"{filename}.html", html_bytes)
+            # # === BUAT ZIP GRAFIK ===
+            # zip_buffer = BytesIO()
+            # with zipfile.ZipFile(zip_buffer, "w") as zf:
+            #     for filename, fig in figs:
+            #         fig.update_layout(
+            #             template="plotly_white",
+            #             paper_bgcolor="white",
+            #             plot_bgcolor="white"
+            #         )
+            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
+            #         zf.writestr(f"{filename}.html", html_bytes)
 
-            zip_buffer.seek(0)
-            st.download_button(
-                label="📥 Download Semua Grafik (ZIP)",
-                data=zip_buffer.getvalue(),
-                file_name=f"speci_grafik_{tahun}_{bulan}.zip",
-                mime="application/zip"
-            )
+            # zip_buffer.seek(0)
+            # st.download_button(
+            #     label="📥 Download Semua Grafik (ZIP)",
+            #     data=zip_buffer.getvalue(),
+            #     file_name=f"speci_grafik_{tahun}_{bulan}.zip",
+            #     mime="application/zip"
+            # )
     else:
         st.warning("Lakukan analisis SPECI terlebih dahulu.")
         
@@ -775,27 +775,28 @@ if menu == "TAF":
 
             figs = show_TAF_visualizations(df_TAF_harian, df_TAF_bulanan, return_figs=True)
 
-            # === BUAT ZIP GRAFIK ===
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zf:
-                for filename, fig in figs:
-                    fig.update_layout(
-                        template="plotly_white",
-                        paper_bgcolor="white",
-                        plot_bgcolor="white"
-                    )
-                    html_bytes = fig.to_html(full_html=False).encode("utf-8")
-                    zf.writestr(f"{filename}.html", html_bytes)
+            # # === BUAT ZIP GRAFIK ===
+            # zip_buffer = BytesIO()
+            # with zipfile.ZipFile(zip_buffer, "w") as zf:
+            #     for filename, fig in figs:
+            #         fig.update_layout(
+            #             template="plotly_white",
+            #             paper_bgcolor="white",
+            #             plot_bgcolor="white"
+            #         )
+            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
+            #         zf.writestr(f"{filename}.html", html_bytes)
 
-            zip_buffer.seek(0)
-            st.download_button(
-                label="📥 Download Semua Grafik (ZIP)",
-                data=zip_buffer.getvalue(),
-                file_name=f"TAF_grafik_{tahun}_{bulan}.zip",
-                mime="application/zip"
-            )
+            # zip_buffer.seek(0)
+            # st.download_button(
+            #     label="📥 Download Semua Grafik (ZIP)",
+            #     data=zip_buffer.getvalue(),
+            #     file_name=f"TAF_grafik_{tahun}_{bulan}.zip",
+            #     mime="application/zip"
+            # )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
+
 
 
 

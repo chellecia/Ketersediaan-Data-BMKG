@@ -33,7 +33,7 @@ if "username" not in st.session_state:
 if not st.session_state.logged_in:
     st.set_page_config(page_title="Login - Analisis BMKG", layout="centered")
 
-    st.title("🔑 Login Aplikasi Analisis Cuaca BMKG")
+    st.title("🔑 Login Aplikasi Analisis Ketersediaan Data Cuaca BMKG ")
     input_username = st.text_input("Username")
     input_password = st.text_input("Password", type="password")
 
@@ -796,6 +796,7 @@ if menu == "TAF":
             # )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
+
 
 
 

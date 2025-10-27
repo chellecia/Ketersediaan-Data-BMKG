@@ -1,16 +1,21 @@
 import aiohttp 
+import streamlit as st
 # untuk ambil data dari internet tanpa nunggu satu persatu, 
 # jadi prosesnya bisa jalan bareng dan lebih cepat bila ambil data dari banyak endpoint secara paralel
 
 
 LOGIN_URL = "https://bmkgsatu.bmkg.go.id/db/bmkgsatu/@login"
-USERNAME = "aksesdata"
-PASSWORD = "@ksesData"
+
+def get_credentials():
+    USERNAME = st.secrets ["auth"]["username"]
+    PASSWORD = st.secrets ["auth"]["password"]
+    return USERNAME, PASSWORD
 
 async def get_bmkg_token():
     """
     Login ke BMKG SATU dan mengembalikan JWT token.
     """ # # Fungsi async untuk login ke API BMKG dan ambil token
+    USERNAME, PASSWORD = get_credentials()
     
     payload = {"username": USERNAME, "password": PASSWORD} # Data login yang dikirim ke server (isi username & password)
     try:

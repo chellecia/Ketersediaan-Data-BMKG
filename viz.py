@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from plotly.express import colors
+import numpy as np
 
 # === Styling konsisten ===
 def fix_figure_colors(fig):
@@ -17,10 +18,57 @@ def fix_figure_colors(fig):
 
 
 # === Visualisasi METAR ===
+# === Visualisasi METAR ===
+# === Visualisasi METAR ===
+
 def show_metar_visualizations(df_harian: pd.DataFrame, df_bulanan :pd.DataFrame, return_figs=True):
     st.markdown("<h3 style='color:#0d47a1;'>📊 Visualisasi Laporan METAR</h4>", unsafe_allow_html=True)
     figs = []
     
+    # Rata-rata Laporan METAR Aktual vs. Target (Diharapkan) per Interval Stasiun
+    # Hitung rata-rata per interval
+    df_grouped = df_harian.groupby("Interval Pengiriman").agg({
+        "Laporan Masuk": "mean",
+        "Laporan Diharapkan": "mean"
+    }).reset_index()
+
+    # Ubah ke long format untuk Plotly Express
+    df_long = pd.melt(
+        df_grouped,
+        id_vars="Interval Pengiriman",
+        value_vars=["Laporan Masuk", "Laporan Diharapkan"],
+        var_name="Jenis Laporan",
+        value_name="Jumlah Rata-rata"
+    )
+
+    # Buat grouped bar chart
+    fig = px.bar(
+        df_long,
+        x="Interval Pengiriman",
+        y="Jumlah Rata-rata",
+        color="Jenis Laporan",
+        barmode="group",
+        text="Jumlah Rata-rata",
+        title="Rata-rata Laporan METAR Aktual vs. Target (Diharapkan) per Interval Stasiun",
+        labels={"Interval Pengiriman": "Interval (Jam)"}
+    )
+
+    # Format angka di atas batang
+    fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+
+    # Layout
+    fig.update_layout(
+        yaxis_title="Jumlah Laporan Rata-rata",
+        xaxis=dict(tickmode="linear"),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(color="#0d47a1")
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+    figs.append(("Rata.png", fix_figure_colors(fig)))
+
+
     # ================== Line Chart Ketersediaan Harian per Stasiun ==================
     daftar_stasiun = df_harian["ICAO"].unique().tolist()
     stasiun_terpilih = st.multiselect(
@@ -69,52 +117,7 @@ def show_metar_visualizations(df_harian: pd.DataFrame, df_bulanan :pd.DataFrame,
     else:
         st.info("Silakan pilih minimal satu stasiun untuk menampilkan grafik.")
 
-    # ================== Interval Pengiriman  ==================
-    # Filter data normal (≤100%)
-    interval_normal = df_harian[df_harian["Ketersediaan (%)"] <= 100]
-    interval_df = interval_normal.groupby("Interval Pengiriman")["Ketersediaan (%)"].mean().reset_index()
-
- # hitung outlier
-    anomali_count = df_harian[df_harian["Ketersediaan (%)"] > 100]\
-        .groupby("Interval Pengiriman")["Ketersediaan (%)"].count().reset_index()
-    anomali_count.rename(columns={"Ketersediaan (%)": "Outlier"}, inplace=True)
-
-    custom_blue_scale = [
-        [0.0, "#c6dbef"],  # biru tua untuk nilai rendah
-        [0.5, "#2171b5"],  # biru medium
-        [1.0, "#08306b"]   # biru muda tapi masih jelas
-    ]
-    # Buat bar chart rata-rata
-    fig_interval = px.bar(
-        interval_df,
-        x="Interval Pengiriman",
-        y="Ketersediaan (%)",
-        color="Ketersediaan (%)",
-        color_continuous_scale=custom_blue_scale,
-        text=interval_df["Ketersediaan (%)"].round(1),
-        title="Pengaruh Interval Pengiriman terhadap Rata-rata Ketersediaan"
-    )
-    fig_interval.update_traces(textposition="outside")
-
-    # Tambahkan jumlah outlier sebagai text di atas bar
-    for i, row in anomali_count.iterrows():
-        fig_interval.add_annotation(
-            x=row["Interval Pengiriman"],
-            y=100,  # di atas bar
-            text=f"{row['Outlier']} outlier >100%",
-            showarrow=False,
-            font=dict(color="red", size=12)
-        )
-
-    # Styling konsisten
-    fig_interval = fix_figure_colors(fig_interval)
-
-    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
-    # Tampilkan di Streamlit
-    st.plotly_chart(fig_interval, use_container_width=True)
-    figs.append(("interval_jam.png", fig_interval))
-
-    # ================== Donut Chart Status ==================
+# ================== Donut Chart Status ==================
     pie_data = df_harian["Catatan"].value_counts().reset_index()
     pie_data.columns = ["Status", "Jumlah"]
 
@@ -135,43 +138,10 @@ def show_metar_visualizations(df_harian: pd.DataFrame, df_bulanan :pd.DataFrame,
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
     figs.append(("status_donut.png", fix_figure_colors(fig_status)))
 
-# ================== Tabel ==================
-    st.markdown(
-        "<h6 style='color:#000000; font-weight: bold;'>Laporan Masuk vs Diharapkan per Jam Operasional</h5>",
-        unsafe_allow_html=True
-    )
-
-    if "Jam Operasional" in df_harian.columns:
-        # Urutkan jam kronologis
-        df_harian["Jam Operasional"] = pd.Categorical(
-            df_harian["Jam Operasional"],
-            categories=sorted(df_harian["Jam Operasional"].unique()),
-            ordered=True
-        )
-
-        jam_df = df_harian.groupby("Jam Operasional").agg(
-            {"Laporan Masuk": "sum", "Laporan Diharapkan": "sum"}
-        ).reset_index()
-
-        # Hitung persentase capaian
-        jam_df["Persentase (%)"] = (jam_df["Laporan Masuk"] / jam_df["Laporan Diharapkan"] * 100).round(1)
-
-        # Buat style untuk heatmap sederhana
-        def color_scale(val):
-            if val >= 100:
-                color = 'background-color: #2ca02c; color: white'  # hijau
-            elif val >= 50:
-                color = 'background-color: #ffdd57; color: black'  # kuning
-            else:
-                color = 'background-color: #d62728; color: white'  # merah
-            return color
-        # Terapkan style di kolom persentase
-        styled_df = jam_df.style.applymap(color_scale, subset=["Persentase (%)"])
-        st.dataframe(styled_df, use_container_width=True)
-
     # return semua fig
     if return_figs:
         return figs
+
 
 # === Visualisasi RASON ===
 # === Visualisasi RASON ===
@@ -187,47 +157,45 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
     dfh = df_rason_harian.copy()
     dfb = df_rason_bulanan.copy()
    
-    # --- Grafik 1: Horizontal Bar Chart per stasiun
-    dfb_sorted = dfb.sort_values(by="Ketersediaan (%)", ascending=True).reset_index(drop=True)
-    avg_availability = dfb_sorted["Ketersediaan (%)"].mean()
+    # --- Grafik 1: Bar Chart Proporsi Stasiun berdasarkan Status ---
+    status_counts = dfb["Catatan"].value_counts().reset_index()
+    status_counts.columns = ["Catatan", "Jumlah Stasiun"]
 
-    dfb_sorted["Highlight"] = "Normal"
-    if len(dfb_sorted) >= 3:
-        dfb_sorted.loc[:2, "Highlight"] = "Bottom 3"
-        dfb_sorted.loc[dfb_sorted.tail(3).index, "Highlight"] = "Top 3"
-
-    vivid_colors = px.colors.qualitative.Vivid
-    color_map = {
-        "Top 3": vivid_colors[0],
-        "Bottom 3": vivid_colors[1],
-        "Normal": vivid_colors[2]
-    }
-
-    fig_barh = px.bar(
-        dfb_sorted,
-        y="Nama Stasiun", x="Ketersediaan (%)",
-        color="Highlight",
-        color_discrete_map=color_map,
-        text=dfb_sorted["Ketersediaan (%)"].round(1),
-        hover_data=["Jumlah Laporan"],
-        title="Ketersediaan Bulanan RASON per Stasiun"
+    # Buat bar chart
+    fig_status_bar = px.bar(
+        status_counts,
+        x="Catatan",
+        y="Jumlah Stasiun",
+        color="Catatan",
+        text="Jumlah Stasiun",
+        color_discrete_sequence=["#0d47a1", "#39e426", "#ffb300"],
+        title="Jumlah Stasiun berdasarkan Status Klasifikasi"
     )
-    fig_barh.add_vline(
-        x=avg_availability,
-        line_dash="dot", line_color="black",
-        annotation_text=f"Rata-rata {avg_availability:.1f}%",
-        annotation_position="top"
+
+    fig_status_bar.update_traces(
+        textposition="outside",
+        hovertemplate="%{x}: %{y} stasiun",
+   
     )
-    fig_barh.update_traces(textposition="outside", cliponaxis=False)
-    fig_barh.update_xaxes(range=[0, 105])
-    st.plotly_chart(fig_barh, use_container_width=True)
-    figs.append(("barh_sorted_rason.png", fig_barh))
+    fig_status_bar.update_layout(
+        showlegend=False,
+        yaxis_title="Jumlah Stasiun",
+        xaxis_title=None,
+        template="plotly_white",
+        bargap=0.60,
+        margin=dict(t=30, b=40, l=50, r=20)
+    )
+
+    st.plotly_chart(fig_status_bar, use_container_width=True)
+    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+    figs.append(("bar_status_klasifikasi.png", fig_status_bar))
 
 
     # --- Grafik 2: Donut Chart 
     # Hitung jumlah laporan valid per jam
     total_00z = dfh["00Z"].notna().sum()
     total_12z = dfh["12Z"].notna().sum()
+    total_all = total_00z + total_12z
 
     df_pie = pd.DataFrame({
         "Jam": ["00Z", "12Z"],
@@ -250,65 +218,63 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
         textfont_size=14,
         hovertemplate="%{label}: %{percent}"  # hanya label + persen
 )
+    # Tambah total di tengah
+    fig_donut.add_annotation(
+        text=f"<b>{total_all}</b><br>Total",
+        showarrow=False,
+        font_size=14
+    )
+    fig_donut.update_layout(
+        template="plotly_white",
+        margin=dict(t=60, b=60, l=60, r=60)
+    )
+    
     st.plotly_chart(fig_donut, use_container_width=True)
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
     figs.append(("donut_00z_12z.png", fig_donut))
 
 
-
-# ============ Rata rata Laporan Per Hari ================
+    # ============ Total Laporan Lengkap per Hari (Periode Bulan Ini) ================
     # Hitung total laporan per baris (00Z + 12Z)
     dfh["Total Laporan"] = dfh[["00Z", "12Z"]].notna().sum(axis=1)
 
-    # --- 1. Agregasi harian ---
-    daily_summary = dfh.groupby("Tanggal")["Total Laporan"].value_counts().unstack(fill_value=0)
-    daily_summary["Total Laporan"] = daily_summary.sum(axis=1)
-    daily_summary = daily_summary.reset_index()
-
-    # --- 2. Ubah nama hari ke bahasa Indonesia ---
-    hari_map = {
-        "Monday": "Senin",
-        "Tuesday": "Selasa",
-        "Wednesday": "Rabu",
-        "Thursday": "Kamis",
-        "Friday": "Jumat",
-        "Saturday": "Sabtu",
-        "Sunday": "Minggu"
-    }
-    daily_summary["Hari"] = pd.to_datetime(daily_summary["Tanggal"]).dt.day_name().map(hari_map)
-
-    # --- 3. Rename kolom '2' menjadi 'Laporan Lengkap' untuk lebih jelas ---
-    if 2 in daily_summary.columns:
-        daily_summary = daily_summary.rename(columns={2: "Laporan Lengkap"})
-    else:
-        daily_summary["Laporan Lengkap"] = 0  # jika tidak ada laporan lengkap sama sekali
-
-    # --- 4. Rata-rata laporan lengkap per hari dalam seminggu ---
-    weekly_pattern = daily_summary.groupby("Hari")["Laporan Lengkap"].mean().reindex([
-        "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"
-    ]).reset_index().rename(columns={"Laporan Lengkap": "Rata-rata Laporan Lengkap"})
-
-
-    # --- 5. Visualisasi: Bar Chart Rata-rata Laporan Lengkap per Hari ---
-    custom_green = [
-    [0.0,"#ADF1AD"],  # nilai terendah → hijau tua
-    [1.0, "#006400"]   # nilai tertinggi → hijau cerah
-]
-    fig_bar = px.bar(
-        weekly_pattern,
-        x="Hari",
-        y="Rata-rata Laporan Lengkap",
-        title="Rata-rata Jumlah Laporan Lengkap per Hari",
-        text=weekly_pattern["Rata-rata Laporan Lengkap"].round(1),
-        labels={"Rata-rata Laporan Lengkap": "Rata-rata Laporan Lengkap", "Hari": "Hari"},
-        color="Rata-rata Laporan Lengkap",  # Warna berbeda per hari
-        color_continuous_scale=custom_green, 
-        range_color=[weekly_pattern["Rata-rata Laporan Lengkap"].min(), weekly_pattern["Rata-rata Laporan Lengkap"].max()]
+    # --- 1. Hitung jumlah laporan lengkap (2 laporan/hari) per tanggal ---
+    daily_summary = (
+        dfh.groupby("Tanggal")["Total Laporan"]
+        .apply(lambda x: (x == 2).sum())  # hitung berapa baris lengkap (00Z+12Z)
+        .reset_index(name="Laporan Lengkap")
     )
-    fig_bar.update_traces(textposition="outside")
-    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
-    st.plotly_chart(fig_bar, use_container_width=True)
 
+    # --- 2. Visualisasi: Line Chart Total Laporan Lengkap per Tanggal ---
+    fig_line = px.line(
+        daily_summary,
+        x="Tanggal",
+        y="Laporan Lengkap",
+        markers=True,
+        title="Tren Jumlah Stasiun dengan Laporan Harian Lengkap (00Z & 12Z)",
+        labels={"Laporan Lengkap": "Jumlah Laporan Lengkap", "Tanggal": "Tanggal"}
+    )
+
+    fig_line.update_traces(
+        line=dict(width=3, color="#185DA2"),
+        marker=dict(size=8, color="#39e426")
+    )
+
+    fig_line.update_layout(
+       yaxis = dict(
+           range =[max(0, daily_summary["Laporan Lengkap"].min()-1),
+                   daily_summary["Laporan Lengkap"].max()+1],
+           showgrid = True
+       ),
+       xaxis = dict(showgrid=True),
+       hovermode= "x unified"
+    )
+
+    st.plotly_chart(fig_line, use_container_width=True)
+    st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+    figs.append(("line_laporan_per_hari.png", fig_line))
+
+  
     # ==================== Return Figures ====================
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
@@ -380,8 +346,7 @@ def show_speci_visualizations(df_speci_harian: pd.DataFrame, df_speci_bulanan: p
         return fixed_figs
 
 
-
-# ========TAF ============
+# ======== VISUALISASI TAF ============
 
 def show_TAF_visualizations(df_harian: pd.DataFrame, df_bulanan: pd.DataFrame, return_figs=True):
     st.markdown("<h4 style='color:#0d47a1;'>⚠️ Visualisasi Laporan TAF </h4>", unsafe_allow_html=True)
@@ -439,7 +404,7 @@ def show_TAF_visualizations(df_harian: pd.DataFrame, df_bulanan: pd.DataFrame, r
    
    
 
-# Hitung distribusi
+    # Hitung distribusi
 
     df_status = df_harian["Catatan"].value_counts().reset_index()
     df_status.columns = ["Status", "Jumlah"]

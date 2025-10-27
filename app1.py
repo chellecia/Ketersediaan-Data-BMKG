@@ -16,14 +16,15 @@ from viz import show_metar_visualizations, show_speci_visualizations, show_rason
 from streamlit_option_menu import option_menu
 
 
-
 # ================== LOGIN ==================
+def check_login(username, password):
+    """Periksa username dan password dari secrets.toml"""
+    users = st.secrets["users"]
+    if username in users and users[username] == password:
+        return True
+    return False
 
-# Dummy user database (ganti sesuai kebutuhan)
-USERS = {
-    "intern2025": "analyZ2025",
-}
-
+# --- State management ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
@@ -33,12 +34,12 @@ if "username" not in st.session_state:
 if not st.session_state.logged_in:
     st.set_page_config(page_title="Login - Analisis BMKG", layout="centered")
 
-    st.title("🔑 Login Aplikasi Analisis Ketersediaan Data Cuaca BMKG ")
+    st.title("🔑 Login Aplikasi Analisis Cuaca BMKG")
     input_username = st.text_input("Username")
     input_password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if input_username in USERS and USERS[input_username] == input_password:
+        if check_login(input_username,input_password):
             st.session_state.logged_in = True
             st.session_state.username = input_username
             st.success("Login berhasil! Memuat aplikasi...")
@@ -298,6 +299,7 @@ if menu == "METAR":
             except Exception as e:
                 st.error(f"Gagal analisis METAR: {e}")
 
+
     # Jika analisis selesai
     if st.session_state.get("metar_analisis_selesai", False):
         metar_subtabs = st.tabs(["📄 Tabel Analisis", "📊 Visualisasi"])
@@ -308,17 +310,28 @@ if menu == "METAR":
 
             # Hitung KPI
             total_stasiun = df_harian["ICAO"].nunique()
-            total_laporan = len(df_harian)
             persentase_lengkap = df_harian["Status Lengkap"].mean() * 100
-            tidak_lengkap = 100 - persentase_lengkap
-
+            total_laporan_masuk = df_harian["Laporan Masuk"].sum()
+            total_target_laporan = df_harian["Laporan Diharapkan"].sum()
+            
+            # Volume Laporan (%)
+            persentase_volume_METAR = round((total_laporan_masuk / total_target_laporan) * 100, 1) \
+                if total_target_laporan > 0 else 0
+                
+            jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+            
+            # Rata-rata METAR/Stasiun/Hari
+            rata2_METAR_per_hari = round(total_laporan_masuk / (total_stasiun * jumlah_hari_bulan), 2) \
+                if total_stasiun > 0 else 0
+                
+            # Tampilan KPI Cards
             st.markdown("<h4 style='margin-top:15px; color:#000000;'>📊 Ringkasan METAR</h4>", unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
 
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
-            kpi_card(col2, "📑 Total Record Harian", total_laporan)
-            kpi_card(col3, "✅ Lengkap (%)", f"{persentase_lengkap:.1f}%")
-            kpi_card(col4, "⚠️ Tidak Lengkap (%)", f"{tidak_lengkap:.1f}%")
+            kpi_card(col2, "📈 Volume Laporan (%)", f"{persentase_volume_METAR:.1f}%")
+            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi (%)", f"{persentase_lengkap:.1f}%")
+            kpi_card(col4, "🎯 Rata-rata METAR/Hari", f"{rata2_METAR_per_hari}")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -388,7 +401,6 @@ if menu == "METAR":
                 mime="text/csv"
             )
 
-
         # ================= TAB VISUALISASI =================
         with metar_subtabs[1]:
             df_filtered = st.session_state["df_harian"]
@@ -400,11 +412,13 @@ if menu == "METAR":
             # zip_buffer = BytesIO()
             # with zipfile.ZipFile(zip_buffer, "w") as zf:
             #     for filename, fig in figs:
-            #         fig.update_layout(template="plotly_white", 
-            #                           paper_bgcolor="white", 
-            #                           plot_bgcolor="white")
-
-            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
+            #         fig.update_layout(template="plotly_white", paper_bgcolor="white", plot_bgcolor="white")
+            #     try:
+            #         img_bytes = fig.to_image(format="png")
+            #         zf.writestr(f"{filename}.png", img_bytes)
+            #     except Exception as e:
+            #         # fallback: simpan sebagai HTML
+            #         html_bytes = fig.to_html().encode("utf-8")
             #         zf.writestr(f"{filename}.html", html_bytes)
 
             # zip_buffer.seek(0)
@@ -416,6 +430,7 @@ if menu == "METAR":
             # )
     else:
         st.warning("Lakukan analisis METAR terlebih dahulu.")
+
 
 # ================= TAB RASON =================
 # ================= TAB RASON =================
@@ -453,21 +468,24 @@ if menu == "RASON":
 
             # === KPI CARDS ===
             total_stasiun = df_rason_harian["WMO ID"].nunique()
-            total_laporan = len(df_rason_harian)
+            total_laporan = df_rason_harian["Jumlah Laporan"].sum()
             total_hari_data = df_rason_harian["Tanggal"].nunique() if "Tanggal" in df_rason_harian else 0
-
+            
             hari_dalam_bulan = calendar.monthrange(tahun, bulan)[1]
-            hari_tanpa_data = max(0, hari_dalam_bulan - total_hari_data)
 
+            total_target_laporan = df_rason_bulanan["Target Bulanan"].sum()
+            
+            persentase_vol_laporan= round(total_laporan/total_target_laporan *100, 1) if total_target_laporan > 0 else 0
+            rata2_pelaporan_per_hari = round(total_laporan / (total_stasiun * hari_dalam_bulan), 1) if total_stasiun > 0 else 0
+
+            
             st.markdown('<h4 style="color:#000000;">📊 Ringkasan RASON</h4>', unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
-            
-                
             # Tampilkan KPI
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
-            kpi_card(col2, "📑 Total Record Harian", total_laporan)
-            kpi_card(col3, "📆 Hari Ada Data", total_hari_data)
-            kpi_card(col4, "⚠️ Hari Tanpa Data", hari_tanpa_data)
+            kpi_card(col2, "📑 Total Laporan RASON (Bulanan)", total_laporan)
+            kpi_card(col3, "📈 Volume Laporan (%)", persentase_vol_laporan )
+            kpi_card(col4, "🎯 Rata-rata RASON/Hari", rata2_pelaporan_per_hari)
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
@@ -526,16 +544,15 @@ if menu == "RASON":
             #             paper_bgcolor="white",
             #             plot_bgcolor="white"
             #         )
-            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
-            #         zf.writestr(f"{filename}.html", html_bytes)
+            #         img_bytes = fig.to_image(format="png")
+            #         zf.writestr(f"{filename}.png", img_bytes)
 
-          
-            # zip_buffer.seek(0)
-            # st.download_button(
-            #     label="📥 Download Semua Grafik (ZIP)",
-            #     data=zip_buffer.getvalue(),
-            #     file_name=f"rason_grafik_{tahun}_{bulan}.zip",
-            #     mime="application/zip"
+            #     zip_buffer.seek(0)
+            #     st.download_button(
+            #         label="📥 Download Semua Grafik (ZIP)",
+            #         data=zip_buffer.getvalue(),
+            #         file_name=f"rason_grafik_{tahun}_{bulan}.zip",
+            #         mime="application/zip"
             #     )
     else:
         st.warning("Lakukan analisis RASON terlebih dahulu.")       
@@ -578,18 +595,23 @@ if menu == "SPECI":
                 
                 # === KPI SPECI ===
                 total_stasiun_aktif = df_speci_harian["ICAO"].nunique()
-                total_record = len(df_speci_harian)
-                total_laporan = df_speci_harian["Jumlah SPECI Harian"].sum()
+                total_speci_bulanan = df_speci_harian["Jumlah SPECI Harian"].sum()  # total laporan sebulan
+
+                jumlah_hari_aktif = df_speci_harian["Tanggal"].nunique()
+                intensitas_harian = round(total_speci_bulanan / jumlah_hari_aktif, 1) if jumlah_hari_aktif > 0 else 0
+
+                frekuensi_speci_per_stasiun = round(total_speci_bulanan / total_stasiun_aktif, 1 ) if total_stasiun_aktif > 0 else 0
 
                 with st.container():    
                     st.markdown('<h4 style="color:#000000;">📊 Ringkasan SPECI</h4>', unsafe_allow_html=True)
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2, col3, col4 = st.columns(4)
 
                     # Tampilkan KPI SPECI
-                    kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")  # biru tegas
-                    kpi_card(col2, "📑 Total Record Harian", total_record, "#1565C0")
-                    kpi_card(col3, "📑 Total Laporan Masuk", total_laporan, "#1565C0")
-                
+                    kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")
+                    kpi_card(col2, "⚡ Intensitas Pelaporan Harian (Nasional)", intensitas_harian, "#1565C0")
+                    kpi_card(col3, "🗂️ Total Laporan SPECI (Bulanan)", total_speci_bulanan, "#1565C0")
+                    kpi_card(col4, "⚠️ Frekuensi SPECI/Stasiun/Bulan", frekuensi_speci_per_stasiun,  "#1565C0")
+              
                 st.markdown("<br>", unsafe_allow_html=True) 
                 st.markdown("<br>", unsafe_allow_html=True) 
                 
@@ -648,8 +670,8 @@ if menu == "SPECI":
             #             paper_bgcolor="white",
             #             plot_bgcolor="white"
             #         )
-            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
-            #         zf.writestr(f"{filename}.html", html_bytes)
+            #         img_bytes = fig.to_image(format="png")
+            #         zf.writestr(f"{filename}.png", img_bytes)
 
             # zip_buffer.seek(0)
             # st.download_button(
@@ -697,13 +719,17 @@ if menu == "TAF":
             df_harian, df_bulanan = st.session_state["df_TAF"]   
             
             # === KPI TAF ===
+            df_harian["Status Lengkap"] = df_harian["Catatan"].apply(lambda x: "✅ Lengkap" in str(x))
+
             total_stasiun_aktif = df_harian["ICAO"].nunique()
             total_laporan_TAF = df_harian["Jumlah TAF Harian"].sum()
             total_target_laporan = df_harian["Target Harian"].sum()
             total_record = len(df_harian)
 
-            persentase_total = round((total_laporan_TAF / total_target_laporan) * 100, 1) \
+            persentase_volume = round((total_laporan_TAF / total_target_laporan) * 100, 1) \
                 if total_target_laporan > 0 else 0
+                
+            persentase_lengkap = round(df_harian["Status Lengkap"].mean() * 100, 1)
 
             jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
             rata2_TAF_per_hari = round(total_laporan_TAF / (total_stasiun_aktif * jumlah_hari_bulan), 2) \
@@ -713,13 +739,20 @@ if menu == "TAF":
                 st.markdown('<h4 style="color:#000000;">📊 Ringkasan TAF</h4>', unsafe_allow_html=True)
                 col1, col2, col3, col4 = st.columns(4)
 
-                kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")
-                kpi_card(col2, "📑 Total Record Harian", total_record, "#1565C0")
-                kpi_card(col3, "✅ Persentase Tersedia (%)", f"{persentase_total:.1f}%", "#43A047")
-                kpi_card(col4, "📑 Total Laporan Masuk", total_laporan_TAF, "#1565C0")
-
-            st.markdown("<br>", unsafe_allow_html=True) 
+            # 1. Jumlah Stasiun (KPI Konteks)
+            kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")
             
+            # 2. Persentase Volume Laporan (KPI Kinerja Utama)  
+            kpi_card(col2, "📈 Volume Laporan (%)", f"{persentase_volume:.1f}%", "#1565C0")
+            
+            # 3. Kepatuhan Tepat Frekuensi (KPI Kontrol Ketat Anda)
+            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi (%)", f"{persentase_lengkap:.1f}%", "#43A047")
+            
+            # 4. Rata-rata TAF per Stasiun/Hari (KPI Efisiensi)
+            kpi_card(col4, "🎯 Rata-rata TAF/Hari", rata2_TAF_per_hari, "#1565C0")
+    
+            st.markdown("<br>", unsafe_allow_html=True) 
+            st.markdown("<br>", unsafe_allow_html=True) 
             
             # --- Filter berdasarkan ICAO ---
             with st.expander("Filter ICAO"):
@@ -734,9 +767,10 @@ if menu == "TAF":
                 df_harian = df_harian[df_harian["ICAO"].isin(selected_stations)]
                 df_bulanan = df_bulanan[df_bulanan["ICAO"].isin(selected_stations)]
             
-                    
+            df_harian_display = df_harian.drop(columns=["Status Lengkap"], errors="ignore")       
+            
             # -berishkan emoji
-            df_taf_harian = df_harian.copy()
+            df_taf_harian = df_harian_display.copy()
             df_taf_harian["Catatan"] = df_taf_harian["Catatan"].apply(
                     lambda x: re.sub(r"[^0-9A-Za-z\s\-]", "", str(x))
                 )  
@@ -747,8 +781,10 @@ if menu == "TAF":
                 )  
         
             # === TABEL HARIAN ===
+        
             st.markdown('<h4 style="color:#000000;">Rekap Harian</h4>', unsafe_allow_html=True)
-            st.dataframe(df_harian, use_container_width=True)
+            st.dataframe(df_harian_display, use_container_width=True)
+            
             st.download_button(
                 label="📥 Download CSV TAF Harian",
                 data=df_taf_harian.to_csv(index=False, encoding="utf-8-sig"),
@@ -784,8 +820,8 @@ if menu == "TAF":
             #             paper_bgcolor="white",
             #             plot_bgcolor="white"
             #         )
-            #         html_bytes = fig.to_html(full_html=False).encode("utf-8")
-            #         zf.writestr(f"{filename}.html", html_bytes)
+            #         img_bytes = fig.to_image(format="png")
+            #         zf.writestr(f"{filename}.png", img_bytes)
 
             # zip_buffer.seek(0)
             # st.download_button(
@@ -796,9 +832,3 @@ if menu == "TAF":
             # )
     else:
         st.warning("Lakukan analisis TAF terlebih dahulu.")
-
-
-
-
-
-

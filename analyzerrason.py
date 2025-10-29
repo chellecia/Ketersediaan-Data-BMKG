@@ -44,7 +44,7 @@ def has_obs_for(flat, hour):
     if n_valid == 0:
         return False, "Tidak Ada"
     elif n_valid < len(cells):
-        return True, "Parsial"
+        return True, "Tidak Lengkap"
     else:
         return True, "Lengkap"
 
@@ -124,7 +124,7 @@ def status_bulanan(row):
     elif row["Jumlah Laporan"] > row["Target Bulanan"]:
         return "⚠️ Anomali"
     elif 0 < row["Jumlah Laporan"] < row["Target Bulanan"]:
-        return "⚠️ Parsial"
+        return "⚠️ Tidak Lengkap"
     else:
         return "❌ Tidak Ada Data"
 
@@ -171,7 +171,7 @@ def analyze_rason(rason_data, station_info_map, tahun, bulan):
             df_rason_harian[jam] = None
 
     df_rason_harian["Jumlah Laporan"] = df_rason_harian[["00Z","12Z"]].apply(
-        lambda x: sum(v in ["Lengkap","Parsial"] for v in x), axis=1
+        lambda x: sum(v in ["Lengkap","Tidak Lengkap"] for v in x), axis=1
     )
 
     # ==== Rekap Bulanan ====

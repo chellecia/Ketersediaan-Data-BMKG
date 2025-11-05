@@ -16,6 +16,8 @@ from viz import show_metar_visualizations, show_speci_visualizations, show_rason
 from streamlit_option_menu import option_menu
 
 
+
+
 # ================== LOGIN ==================
 def check_login(username, password):
     """Periksa username dan password dari secrets.toml"""
@@ -313,18 +315,19 @@ if menu == "METAR":
             persentase_lengkap = df_harian["Status Lengkap"].mean() * 100
             total_laporan_masuk = df_harian["Laporan Masuk"].sum()
             total_target_laporan = df_harian["Laporan Diharapkan"].sum()
+            jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+            target_harian_per_stasiun = df_harian.groupby("ICAO")["Laporan Diharapkan"].first()
+            total_target_laporan = (target_harian_per_stasiun * jumlah_hari_bulan).sum()
             
             # Volume Laporan (%)
             persentase_volume_METAR = round((total_laporan_masuk / total_target_laporan) * 100, 1) \
                 if total_target_laporan > 0 else 0
-                
-            jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
-            
+
             # Rata-rata METAR/Stasiun/Hari
             rata2_METAR_per_hari = round(total_laporan_masuk / (total_stasiun * jumlah_hari_bulan), 2) \
                 if total_stasiun > 0 else 0
                 
-            # Tampilan KPI Cards
+            # Tampilan KPI metar
             st.markdown("<h4 style='margin-top:15px; color:#000000;'>📊 Ringkasan METAR</h4>", unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
 
@@ -723,7 +726,8 @@ if menu == "TAF":
 
             total_stasiun_aktif = df_harian["ICAO"].nunique()
             total_laporan_TAF = df_harian["Jumlah TAF Harian"].sum()
-            total_target_laporan = df_harian["Target Harian"].sum()
+            jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+            total_target_laporan = sum(df_harian.groupby("ICAO")["Target Harian"].first() * jumlah_hari_bulan)
             total_record = len(df_harian)
 
             persentase_volume = round((total_laporan_TAF / total_target_laporan) * 100, 1) \
@@ -731,7 +735,7 @@ if menu == "TAF":
                 
             persentase_lengkap = round(df_harian["Status Lengkap"].mean() * 100, 1)
 
-            jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+    
             rata2_TAF_per_hari = round(total_laporan_TAF / (total_stasiun_aktif * jumlah_hari_bulan), 2) \
                 if total_stasiun_aktif > 0 else 0
                     

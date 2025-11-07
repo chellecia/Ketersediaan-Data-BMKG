@@ -60,7 +60,7 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
                 interval = mode_interval.strip()
 
             # --- Skip AWOS jika mode 1 jam (karena otomatis biasanya 30 menit) ---
-            if "1 jam" in interval.lower() and nama_stasiun.startswith("AWOS"):
+            if mode_interval.lower() == "interval 1 jam" and nama_stasiun.startswith("AWOS"):
                 continue
 
             # --- Tentukan laporan per jam berdasarkan interval ---
@@ -188,3 +188,4 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
 # # Jalankan async main
 # if __name__ == "__main__":
 #     asyncio.run(main())
+

@@ -129,10 +129,9 @@ def status_bulanan(row):
         return "❌ Tidak Ada Data"
 
 
-# ==== Main Analysis Function ====
 def analyze_rason(rason_data, station_info_map, tahun, bulan):
     rows = []
-    seen_global = set()  # untuk filter duplikat di level analyze
+    seen_global = set()
 
     for rec in iter_records(rason_data, tahun, bulan):
         wmo_id = rec["wmo_id"]
@@ -157,7 +156,7 @@ def analyze_rason(rason_data, station_info_map, tahun, bulan):
 
     df_rason_detail = pd.DataFrame(rows)
 
-    # ==== Rekap Harian ====
+    # ==== Rekap Harian (pivot dulu) ====
     df_rason_harian = df_rason_detail.pivot_table(
         index=["WMO ID","Nama Stasiun","Tanggal"],
         columns="Jam",
@@ -168,11 +167,36 @@ def analyze_rason(rason_data, station_info_map, tahun, bulan):
 
     for jam in ["00Z","12Z"]:
         if jam not in df_rason_harian.columns:
-            df_rason_harian[jam] = None
+            df_rason_harian[jam] = "Tidak Ada"
 
     df_rason_harian["Jumlah Laporan"] = df_rason_harian[["00Z","12Z"]].apply(
         lambda x: sum(v in ["Lengkap","Tidak Lengkap"] for v in x), axis=1
     )
+
+    # ==== Tambahkan semua tanggal dalam bulan ====
+    all_dates = pd.date_range(
+        start=f"{tahun}-{bulan:02d}-01",
+        end=f"{tahun}-{bulan:02d}-{calendar.monthrange(tahun, bulan)[1]}"
+    )
+    stations = df_rason_detail[["WMO ID", "Nama Stasiun"]].drop_duplicates()
+    complete_index = (
+        stations.assign(key=1)
+        .merge(pd.DataFrame({"Tanggal": all_dates, "key": 1}), on="key")
+        .drop("key", axis=1)
+    )
+
+    df_rason_harian["Tanggal"] = pd.to_datetime(df_rason_harian["Tanggal"])
+    complete_index["Tanggal"] = pd.to_datetime(complete_index["Tanggal"])
+
+    # Gabungkan supaya semua tanggal muncul
+    df_rason_harian = complete_index.merge(
+        df_rason_harian,
+        on=["WMO ID", "Nama Stasiun", "Tanggal"],
+        how="left"
+    ).fillna({"00Z": "None", "12Z": "None", "Jumlah Laporan": 0})
+
+   # Ubah Tanggal kembali jadi tipe date saja (tanpa jam)
+    df_rason_harian["Tanggal"] = df_rason_harian["Tanggal"].dt.date
 
     # ==== Rekap Bulanan ====
     jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
@@ -185,10 +209,11 @@ def analyze_rason(rason_data, station_info_map, tahun, bulan):
     df_rason_bulanan["Target Bulanan"] = target_bulanan
     df_rason_bulanan["Ketersediaan (%)"] = (
         (df_rason_bulanan["Jumlah_Laporan"] / target_bulanan * 100)
-        .round(1)
+        .round(2)
         .clip(upper=100)
     )
     df_rason_bulanan = df_rason_bulanan.rename(columns={"Jumlah_Laporan":"Jumlah Laporan"})
     df_rason_bulanan["Catatan"] = df_rason_bulanan.apply(status_bulanan, axis=1).astype(str)
 
     return df_rason_harian, df_rason_bulanan
+

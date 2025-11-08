@@ -13,27 +13,16 @@ def get_daily_target(station_list):
     """
     target_dict = {}
     for icao in station_list:
-        if icao in special_stations:
-            target_dict[icao] = 5
-        else:
-            target_dict[icao] = 4
+        target_dict[icao] = 5 if icao in special_stations else 4
     return target_dict
 
-
 def analyze_taf(taf_data, station_info_map, tahun, bulan):
-    """
-    Analisis TAF: menghasilkan DataFrame harian (jumlah per tanggal)
-    dan bulanan (total per stasiun) beserta target, ketersediaan (%), dan catatan dengan emotikon.
-    """
+
     if not taf_data:
         print("[WARNING] Data TAF kosong.")
         return pd.DataFrame(), pd.DataFrame()
 
-    # Semua stasiun dari station_info_map
-    all_stations = list(station_info_map.keys())
-    target_dict = get_daily_target(all_stations)
-
-    # Dictionary bertingkat: stasiun -> tanggal -> jumlah TAF
+    # Hitung jumlah TAF per stasiun per tanggal dan bulanan
     jumlah_per_stasiun_harian = defaultdict(lambda: defaultdict(int))
     jumlah_per_stasiun_bulanan = defaultdict(int)
 
@@ -42,31 +31,41 @@ def analyze_taf(taf_data, station_info_map, tahun, bulan):
         ts = item.get("timestamp_sent_data")
         if not cccc or not ts:
             continue
-
         try:
             dt = pd.to_datetime(ts.strip(), utc=True)
-        except Exception as e:
-            print("Skip parsing error:", ts, e)
+        except Exception:
             continue
-
         if dt.year != tahun or dt.month != bulan:
             continue
-
         tanggal = dt.strftime("%Y-%m-%d")
         jumlah_per_stasiun_harian[cccc][tanggal] += 1
         jumlah_per_stasiun_bulanan[cccc] += 1
 
-    # DataFrame harian: satu row per stasiun per tanggal
+
+    # Target harian hanya untuk stasiun yang muncul di data
+    stasiun_aktif = list(jumlah_per_stasiun_harian.keys())
+    target_dict = get_daily_target(stasiun_aktif)
+
+    # Daftar semua tanggal dalam bulan
+    jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+    all_dates = [pd.Timestamp(year=tahun, month=bulan, day=d).strftime("%Y-%m-%d")
+                 for d in range(1, jumlah_hari_bulan + 1)]
+
+    # --- DataFrame harian ---
     harian_records = []
-    for cccc, tanggal_counts in jumlah_per_stasiun_harian.items():
+    for cccc in stasiun_aktif:
         info = station_info_map.get(cccc, {})
         wmo_id = str(info.get("wmo") or info.get("wmo_id") or "-")
         nama_stasiun = info.get("name") or info.get("stasiun") or f"Stasiun {cccc}"
         target_harian = target_dict.get(cccc, 4)
 
-        for tanggal, jumlah in tanggal_counts.items():
-            persentase = round(jumlah / target_harian * 100, 2)
-            if jumlah < target_harian:
+        for tanggal in all_dates:
+            jumlah = jumlah_per_stasiun_harian[cccc].get(tanggal, 0)
+            persentase = round(jumlah / target_harian * 100, 2) if target_harian else 0
+
+            if jumlah == 0:
+                catatan = "❌ Tidak Ada Data"
+            elif jumlah < target_harian:
                 catatan = "⚠️ Tidak Lengkap"
             elif jumlah == target_harian:
                 catatan = "✅ Lengkap"
@@ -86,31 +85,25 @@ def analyze_taf(taf_data, station_info_map, tahun, bulan):
 
     df_harian = pd.DataFrame(harian_records).sort_values(["ICAO", "Tanggal"]).reset_index(drop=True)
 
-    # DataFrame bulanan: total TAF per stasiun
+    # --- DataFrame bulanan ---
     bulanan_records = []
-    for cccc, tanggal_counts in jumlah_per_stasiun_harian.items():
+    for cccc in stasiun_aktif:
         info = station_info_map.get(cccc, {})
         wmo_id = str(info.get("wmo") or info.get("wmo_id") or "-")
         nama_stasiun = info.get("name") or info.get("stasiun") or f"Stasiun {cccc}"
         target_harian = target_dict.get(cccc, 4)
-        jumlah = jumlah_per_stasiun_bulanan.get(cccc, 0)    
-
-        # Dapatkan jumlah hari dalam bulan
-        jumlah_hari_bulan = calendar.monthrange(tahun, bulan)[1]
+        jumlah = jumlah_per_stasiun_bulanan.get(cccc, 0)
         target_bulanan = target_harian * jumlah_hari_bulan
+        persentase = round(jumlah / target_bulanan * 100, 2) if target_bulanan else 0
 
-        if target_bulanan == 0:
-            persentase = 0
-            catatan = "❌ Tidak ada data"
+        if jumlah == 0:
+            catatan = "❌ Tidak Ada Data"
+        elif jumlah < target_bulanan:
+            catatan = "⚠️ Tidak Lengkap"
+        elif jumlah == target_bulanan:
+            catatan = "✅ Lengkap"
         else:
-            persentase = round(jumlah / target_bulanan * 100, 2)
-            
-            if jumlah < target_bulanan:
-                catatan = "⚠️ Tidak Lengkap"
-            elif jumlah == target_bulanan:
-                catatan = "✅ Lengkap"
-            else:  # jumlah > target_bulanan
-                catatan = "⚠️ Ada AMD/CORR"
+            catatan = "⚠️ Ada AMD/CORR"
 
         bulanan_records.append({
             "WMO ID": wmo_id,
@@ -125,3 +118,4 @@ def analyze_taf(taf_data, station_info_map, tahun, bulan):
     df_bulanan = pd.DataFrame(bulanan_records).sort_values("ICAO").reset_index(drop=True)
 
     return df_harian, df_bulanan
+

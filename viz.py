@@ -133,7 +133,7 @@ def show_metar_visualizations(df_harian: pd.DataFrame, df_bulanan :pd.DataFrame,
         annotations=[dict(text=str(pie_data["Jumlah"].sum()), x=0.5, y=0.5,
                           font_size=18, showarrow=False)]
     )
-    fig_status.update_layout(title="Distribusi Status Ketersediaan")
+    fig_status.update_layout(title="Distribusi Status Ketersediaan METAR")
     st.plotly_chart(fig_status, use_container_width=True)
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
     figs.append(("status_donut.png", fix_figure_colors(fig_status)))
@@ -210,7 +210,7 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
         hole=0.5,
         color="Jam",
         color_discrete_sequence=["#185DA2", "#39e426"],
-        title="Distribusi Laporan 00Z vs 12Z"
+        title="Distribusi Laporan RASON 00Z vs 12Z"
     )
     # Hanya label + persen, hover dihilangkan
     fig_donut.update_traces(
@@ -251,7 +251,7 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
         x="Tanggal",
         y="Laporan Lengkap",
         markers=True,
-        title="Tren Jumlah Stasiun dengan Laporan Harian Lengkap (00Z & 12Z)",
+        title="Tren Jumlah Stasiun dengan Laporan RASON Harian Lengkap (00Z & 12Z)",
         labels={"Laporan Lengkap": "Jumlah Laporan Lengkap", "Tanggal": "Tanggal"}
     )
 
@@ -421,7 +421,7 @@ def show_TAF_visualizations(df_harian: pd.DataFrame, df_bulanan: pd.DataFrame, r
         annotations=[dict(text=str(df_status["Jumlah"].sum()), x=0.5, y=0.5,
                           font_size=18, showarrow=False)]
     )
-    fig_status.update_layout(title="Distribusi Status Ketersediaan")
+    fig_status.update_layout(title="Distribusi Status Ketersediaan TAF")
     st.plotly_chart(fig_status, use_container_width=True)
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
     figs.append(("status_donut.png", fix_figure_colors(fig_status)))

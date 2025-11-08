@@ -473,12 +473,8 @@ if menu == "RASON":
             total_hari_data = df_rason_harian["Tanggal"].nunique() if "Tanggal" in df_rason_harian else 0
             
             hari_dalam_bulan = calendar.monthrange(tahun, bulan)[1]
-
-            total_target_laporan = df_rason_bulanan["Target Bulanan"].sum()
-            
-            persentase_vol_laporan= round(total_laporan/total_target_laporan *100, 2) if total_target_laporan > 0 else 0
+            persentase_vol_laporan = round((total_laporan / (2 * hari_dalam_bulan * total_stasiun)) * 100, 2) if total_stasiun > 0 else 0
             rata2_pelaporan_per_hari = round(total_laporan / (total_stasiun * hari_dalam_bulan), 2) if total_stasiun > 0 else 0
-
             
             st.markdown('<h4 style="color:#000000;">📊 Ringkasan RASON</h4>', unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)

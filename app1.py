@@ -16,8 +16,6 @@ from viz import show_metar_visualizations, show_speci_visualizations, show_rason
 from streamlit_option_menu import option_menu
 
 
-
-
 # ================== LOGIN ==================
 def check_login(username, password):
     """Periksa username dan password dari secrets.toml"""
@@ -320,7 +318,7 @@ if menu == "METAR":
             total_target_laporan = (target_harian_per_stasiun * jumlah_hari_bulan).sum()
             
             # Volume Laporan (%)
-            persentase_volume_METAR = round((total_laporan_masuk / total_target_laporan) * 100, 1) \
+            persentase_volume_METAR = round((total_laporan_masuk / total_target_laporan) * 100, 2) \
                 if total_target_laporan > 0 else 0
 
             # Rata-rata METAR/Stasiun/Hari
@@ -332,8 +330,8 @@ if menu == "METAR":
             col1, col2, col3, col4 = st.columns(4)
 
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
-            kpi_card(col2, "📈 Volume Laporan (%)", f"{persentase_volume_METAR:.1f}%")
-            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi (%)", f"{persentase_lengkap:.1f}%")
+            kpi_card(col2, "📈 Volume Laporan", f"{persentase_volume_METAR:.2f}%")
+            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi", f"{persentase_lengkap:.2f}%")
             kpi_card(col4, "🎯 Rata-rata METAR/Hari", f"{rata2_METAR_per_hari}")
 
             st.markdown("<br>", unsafe_allow_html=True)
@@ -478,16 +476,17 @@ if menu == "RASON":
 
             total_target_laporan = df_rason_bulanan["Target Bulanan"].sum()
             
-            persentase_vol_laporan= round(total_laporan/total_target_laporan *100, 1) if total_target_laporan > 0 else 0
-            rata2_pelaporan_per_hari = round(total_laporan / (total_stasiun * hari_dalam_bulan), 1) if total_stasiun > 0 else 0
+            persentase_vol_laporan= round(total_laporan/total_target_laporan *100, 2) if total_target_laporan > 0 else 0
+            rata2_pelaporan_per_hari = round(total_laporan / (total_stasiun * hari_dalam_bulan), 2) if total_stasiun > 0 else 0
 
             
             st.markdown('<h4 style="color:#000000;">📊 Ringkasan RASON</h4>', unsafe_allow_html=True)
             col1, col2, col3, col4 = st.columns(4)
-            # Tampilkan KPI
+            # Tampilkan KPI RASON
+        
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun)
             kpi_card(col2, "📑 Total Laporan RASON (Bulanan)", total_laporan)
-            kpi_card(col3, "📈 Volume Laporan (%)", persentase_vol_laporan )
+            kpi_card(col3, "📈 Volume Laporan",f"{persentase_vol_laporan:.2f}% ")
             kpi_card(col4, "🎯 Rata-rata RASON/Hari", rata2_pelaporan_per_hari)
 
             st.markdown("<br>", unsafe_allow_html=True)
@@ -601,9 +600,9 @@ if menu == "SPECI":
                 total_speci_bulanan = df_speci_harian["Jumlah SPECI Harian"].sum()  # total laporan sebulan
 
                 jumlah_hari_aktif = df_speci_harian["Tanggal"].nunique()
-                intensitas_harian = round(total_speci_bulanan / jumlah_hari_aktif, 1) if jumlah_hari_aktif > 0 else 0
+                intensitas_harian = round(total_speci_bulanan / jumlah_hari_aktif, 2) if jumlah_hari_aktif > 0 else 0
 
-                frekuensi_speci_per_stasiun = round(total_speci_bulanan / total_stasiun_aktif, 1 ) if total_stasiun_aktif > 0 else 0
+                frekuensi_speci_per_stasiun = round(total_speci_bulanan / total_stasiun_aktif, 2 ) if total_stasiun_aktif > 0 else 0
 
                 with st.container():    
                     st.markdown('<h4 style="color:#000000;">📊 Ringkasan SPECI</h4>', unsafe_allow_html=True)
@@ -730,10 +729,10 @@ if menu == "TAF":
             total_target_laporan = sum(df_harian.groupby("ICAO")["Target Harian"].first() * jumlah_hari_bulan)
             total_record = len(df_harian)
 
-            persentase_volume = round((total_laporan_TAF / total_target_laporan) * 100, 1) \
+            persentase_volume = round((total_laporan_TAF / total_target_laporan) * 100, 2) \
                 if total_target_laporan > 0 else 0
                 
-            persentase_lengkap = round(df_harian["Status Lengkap"].mean() * 100, 1)
+            persentase_lengkap = round(df_harian["Status Lengkap"].mean() * 100, 2)
 
     
             rata2_TAF_per_hari = round(total_laporan_TAF / (total_stasiun_aktif * jumlah_hari_bulan), 2) \
@@ -747,10 +746,10 @@ if menu == "TAF":
             kpi_card(col1, "📡 Jumlah Stasiun", total_stasiun_aktif, "#1565C0")
             
             # 2. Persentase Volume Laporan (KPI Kinerja Utama)  
-            kpi_card(col2, "📈 Volume Laporan (%)", f"{persentase_volume:.1f}%", "#1565C0")
+            kpi_card(col2, "📈 Volume Laporan", f"{persentase_volume:.2f}%", "#1565C0")
             
             # 3. Kepatuhan Tepat Frekuensi (KPI Kontrol Ketat Anda)
-            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi (%)", f"{persentase_lengkap:.1f}%", "#43A047")
+            kpi_card(col3, "✅ Kepatuhan Tepat Frekuensi", f"{persentase_lengkap:.2f}%", "#1565C0")
             
             # 4. Rata-rata TAF per Stasiun/Hari (KPI Efisiensi)
             kpi_card(col4, "🎯 Rata-rata TAF/Hari", rata2_TAF_per_hari, "#1565C0")

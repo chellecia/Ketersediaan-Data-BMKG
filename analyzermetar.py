@@ -63,9 +63,10 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
             if mode_interval.lower() == "interval 1 jam" and nama_stasiun.startswith("AWOS"):
                 continue
 
+
             # --- Tentukan laporan per jam berdasarkan interval ---
             laporan_per_jam = 2 if "30" in interval else 1
-            maksimal = jam_operasi * laporan_per_jam
+            maksimal = int(jam_operasi * laporan_per_jam)
 
             # --- Ambil waktu laporan aktual ---
             waktu_lapor = harian[tanggal_str].get(cccc, set())
@@ -83,8 +84,8 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
                 except:
                     continue
 
-            jumlah = len(slot)
-            persen = round((jumlah / maksimal) * 100, 1) if maksimal else 0
+            jumlah = int(len(slot))
+            persen = round((jumlah / maksimal) * 100, 2) if maksimal else 0
 
             # --- Tentukan catatan ---
             if maksimal == 0:
@@ -93,10 +94,13 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
                 catatan = "❌ Tidak ada data"
             elif jumlah > maksimal:
                 catatan = "⚠️ Data anomali, melebihi ekspektasi"
-            elif jumlah < maksimal * 0.5:
-                catatan = "⚠️ Kurang dari 50%"
-            else:
+            elif jumlah == maksimal:
                 catatan = "✅ Lengkap"
+            else:
+                catatan =  "⚠️ Tidak Lengkap"
+            # if 90 <= persen < 100:
+            #     print(f"[DEBUG] {cccc} {tanggal_str} => jumlah={jumlah}, maksimal={maksimal}, persen={persen}, status={catatan}")
+
 
             harian_record.append({
                 "WMO ID": str(info.get("wmo", "-")),
@@ -154,38 +158,3 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
     df_bulanan = pd.DataFrame(bulanan_records).sort_values("ICAO").reset_index(drop=True)
 
     return df_harian, df_bulanan
-
-    # ==========================
-    # TEST METAR
-    # ==========================
-    
-# import aiohttp
-# import asyncio
-# from auth import get_bmkg_token
-# from fetcher import fetch_gts_data
-
-# async def main():
-#     token = await get_bmkg_token()
-    
-#     async with aiohttp.ClientSession() as session:
-#         # Ambil data METAR bulan tertentu
-#         metar_data = await fetch_gts_data(token, session, 2025, 9, type_message=4)
-        
-#         # ===== CEK CEPAT =====
-#         total_metar = len(metar_data)
-#         print(f"Total METAR record: {total_metar}")
-#         total_stasiun = len(set(r.get('cccc') for r in metar_data if r.get('cccc')))
-#         print(f"Total stasiun METAR: {total_stasiun}")
-
-#         wiii_records = [r for r in metar_data if r.get("cccc") == "WIII"]
-#         if wiii_records:
-#             print(f"Ada {len(wiii_records)} record METAR untuk WIII")
-#             print("Contoh 1 record WIII:")
-#             print(wiii_records[0])
-#         else:
-#             print("Tidak ada record METAR untuk WIII")
-
-# # Jalankan async main
-# if __name__ == "__main__":
-#     asyncio.run(main())
-

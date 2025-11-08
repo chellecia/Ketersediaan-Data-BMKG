@@ -469,7 +469,7 @@ if menu == "RASON":
 
             # === KPI CARDS ===
             total_stasiun = df_rason_harian["WMO ID"].nunique()
-            total_laporan = df_rason_harian["Jumlah Laporan"].sum()
+            total_laporan = int(df_rason_harian["Jumlah Laporan"].fillna(0).sum())
             total_hari_data = df_rason_harian["Tanggal"].nunique() if "Tanggal" in df_rason_harian else 0
             
             hari_dalam_bulan = calendar.monthrange(tahun, bulan)[1]

@@ -158,3 +158,4 @@ def analyze_metar(metar_data, station_info_map, tahun, bulan, mode_interval="Oto
     df_bulanan = pd.DataFrame(bulanan_records).sort_values("ICAO").reset_index(drop=True)
 
     return df_harian, df_bulanan
+

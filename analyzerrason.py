@@ -210,10 +210,10 @@ def analyze_rason(rason_data, station_info_map, tahun, bulan):
     df_rason_bulanan["Ketersediaan (%)"] = (
         (df_rason_bulanan["Jumlah_Laporan"] / target_bulanan * 100)
         .round(2)
-        .clip(upper=100)
     )
     df_rason_bulanan = df_rason_bulanan.rename(columns={"Jumlah_Laporan":"Jumlah Laporan"})
     df_rason_bulanan["Catatan"] = df_rason_bulanan.apply(status_bulanan, axis=1).astype(str)
 
     return df_rason_harian, df_rason_bulanan
+
 

@@ -236,7 +236,10 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
 
     # ============ Total Laporan Lengkap per Hari (Periode Bulan Ini) ================
     # Hitung total laporan per baris (00Z + 12Z)
-    dfh["Total Laporan"] = dfh[["00Z", "12Z"]].notna().sum(axis=1)
+    dfh["Total Laporan"] = dfh[["00Z", "12Z"]].apply(
+    lambda x: sum(v in ["Lengkap", "Tidak Lengkap"] for v in x),
+    axis=1
+)
 
     # --- 1. Hitung jumlah laporan lengkap (2 laporan/hari) per tanggal ---
     daily_summary = (
@@ -244,6 +247,9 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
         .apply(lambda x: (x == 2).sum())  # hitung berapa baris lengkap (00Z+12Z)
         .reset_index(name="Laporan Lengkap")
     )
+    if not daily_summary.empty:
+        y_min = max(0, daily_summary["Laporan Lengkap"].min() - 1)
+        y_max = daily_summary["Laporan Lengkap"].max() + 1
 
     # --- 2. Visualisasi: Line Chart Total Laporan Lengkap per Tanggal ---
     fig_line = px.line(
@@ -255,21 +261,18 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
         labels={"Laporan Lengkap": "Jumlah Laporan Lengkap", "Tanggal": "Tanggal"}
     )
 
+
     fig_line.update_traces(
         line=dict(width=3, color="#185DA2"),
         marker=dict(size=8, color="#39e426")
     )
 
     fig_line.update_layout(
-       yaxis = dict(
-           range =[max(0, daily_summary["Laporan Lengkap"].min()-1),
-                   daily_summary["Laporan Lengkap"].max()+1],
-           showgrid = True
-       ),
-       xaxis = dict(showgrid=True),
-       hovermode= "x unified"
+        yaxis=dict(range=[y_min, y_max], showgrid=True),
+        xaxis=dict(showgrid=True),
+        hovermode="x unified",
+        margin=dict(t=80, b=40)
     )
-
     st.plotly_chart(fig_line, use_container_width=True)
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
     figs.append(("line_laporan_per_hari.png", fig_line))

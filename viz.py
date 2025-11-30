@@ -193,8 +193,8 @@ def show_rason_visualizations(df_rason_harian: pd.DataFrame,
 
     # --- Grafik 2: Donut Chart 
     # Hitung jumlah laporan valid per jam
-    total_00z = dfh["00Z"].notna().sum()
-    total_12z = dfh["12Z"].notna().sum()
+    total_00z = dfh["00Z"].isin(["Lengkap", "Tidak Lengkap"]).sum()
+    total_12z = dfh["12Z"].isin(["Lengkap", "Tidak Lengkap"]).sum()
     total_all = total_00z + total_12z
 
     df_pie = pd.DataFrame({
@@ -433,3 +433,4 @@ def show_TAF_visualizations(df_harian: pd.DataFrame, df_bulanan: pd.DataFrame, r
     if return_figs:
         fixed_figs = [(fname, fix_figure_colors(fig)) for fname, fig in figs]
         return fixed_figs
+
